@@ -17,7 +17,8 @@ export default function ProductForm({ productId }: { productId?: string }) {
           setLoading(true);
           const data = await fetchProduct(String(productId));
           setProduct(data);
-        } catch (err) {
+        } catch (err) { 
+          console.error("Product fetch error:", err);
           setError("Failed to load product details.");
         } finally {
           setLoading(false);
@@ -49,6 +50,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
       }
       router.push("/products");
     } catch (err) {
+      console.error("Product update error:", err);
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);

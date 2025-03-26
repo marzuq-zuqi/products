@@ -22,11 +22,12 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
-        router.push("/login"); // Redirect to login after successful registration
+        router.push("/login");
       } else {
         setError("Registration failed");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("Something went wrong");
     }
   };

@@ -27,6 +27,7 @@ export default function LoginPage() {
         setError("Invalid credentials");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("Something went wrong");
     }
   };
