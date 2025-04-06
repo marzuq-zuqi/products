@@ -5,7 +5,13 @@ import { createProduct, updateProduct, fetchProduct } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
 export default function ProductForm({ productId }: { productId?: string }) {
-  const [product, setProduct] = useState({ name: "", price: "", quantity: "" });
+  const [product, setProduct] = useState<{ name: string; price: string; quantity: string, description: string }>({
+    name: "",
+    price: "",
+    quantity: "",
+    description: "",
+  });
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -16,6 +22,7 @@ export default function ProductForm({ productId }: { productId?: string }) {
         try {
           setLoading(true);
           const data = await fetchProduct(String(productId));
+          if (data) setProduct(data);
           setProduct(data);
         } catch (err) { 
           console.error("Product fetch error:", err);
@@ -88,6 +95,15 @@ export default function ProductForm({ productId }: { productId?: string }) {
         onChange={handleChange}
         className="border p-2 w-full mb-2"
       />
+      
+      <label className="block">Description:</label>
+      <input
+        name="description"
+        value={product.description}
+        onChange={handleChange}
+        className="border p-2 w-full mb-2"
+      />
+
 
       <button
         type="submit"
