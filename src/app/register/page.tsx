@@ -1,61 +1,121 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { register } from "@/lib/api";
 
-export default function RegisterPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+export default function RegisterForm() {
   const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [role, setRole] = useState("user");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    try {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
+    if (!email || !username || !password || !role) {
+      setError("All fields are required");
+      return;
+    }
 
-      if (response.ok) {
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await register(email, password, username, role);
+
+      if (res.ok) {
         router.push("/login");
       } else {
-        setError("Registration failed");
+        setError(res.data.message || "Registration failed");
       }
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Something went wrong");
+      console.error("Registration error:", err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-96">
-        <h2 className="text-xl font-bold mb-4">Register</h2>
-        {error && <p className="text-red-500">{error}</p>}
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 space-y-4 bg-white shadow rounded-md">
+      <h2 className="text-xl font-semibold">Register</h2>
 
+      {error && <p className="text-red-600 text-sm">{error}</p>}
+
+      <div>
+        <label className="block text-sm font-medium">Email</label>
         <input
           type="email"
-          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="border p-2 w-full mb-2"
+          className="w-full p-2 border rounded"
+          required
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Username</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="w-full p-2 border rounded"
+          required
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Role</label>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="w-full p-2 border rounded"
+        >
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Password</label>
         <input
           type="password"
-          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="border p-2 w-full mb-4"
+          className="w-full p-2 border rounded"
+          required
         />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded w-full">
-          Register
-        </button>
-      </form>
-    </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Confirm Password</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full p-2 border rounded"
+          required
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        {loading ? "Registering..." : "Register"}
+      </button>
+    </form>
   );
 }

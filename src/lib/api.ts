@@ -1,39 +1,72 @@
-const API_URL = "http://localhost:8080/api/products";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-export async function fetchProducts(page: number, limit: number, searchQuery: string) {
-  const res = await fetch(API_URL);
-  return res.json();
+type FetchOptions = {
+  method?: "GET" | "POST" | "PUT" | "DELETE";
+  body?: any;
+  auth?: boolean; // whether to include credentials
+};
+
+type APIResponse<T = any> = {
+  ok: boolean;
+  status: number;
+  data?: T;
+};
+
+async function request<T = any>(
+  endpoint: string,
+  { method = "GET", body, auth = true }: FetchOptions = {}
+): Promise<APIResponse<T>> {
+  try {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method,
+      headers: body ? { "Content-Type": "application/json" } : undefined,
+      body: body ? JSON.stringify(body) : undefined,
+      credentials: auth ? "include" : "same-origin",
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    return {
+      ok: res.ok,
+      status: res.status,
+      data,
+    };
+  } catch (error) {
+    console.error("API request failed:", error);
+    return {
+      ok: false,
+      status: 500,
+      // data: { message: "Network error" },
+      data: undefined,
+    };
+  }
 }
 
-// export async function fetchProducts(page = 1, limit = 10, searchQuery = "") {
-//   const res = await fetch(
-//     `/api/products?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery)}`
-//   );
-//   if (!res.ok) throw new Error("Failed to fetch products");
-//   return await res.json();
-// }
+// ---------- Auth ----------
+export const login = (username: string, password: string) =>
+  request("/auth/login", { method: "POST", body: { username, password } });
 
-export async function fetchProduct(id: string) {
-  const res = await fetch(`${API_URL}/${id}`);
-  return res.json();
-}
+export const register = (email: string, password: string, username: string, role: string) =>
+  request("/auth/register", { method: "POST", body: { email, password, username, role } });
 
-export async function createProduct(product: any) {
-  await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
-  });
-}
+export const logout = () => request("/auth/logout", { method: "POST" });
 
-export async function updateProduct(id: string, product: any) {
-  await fetch(`${API_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
-  });
-}
+// ---------- Products ----------
+export const fetchProducts = (
+  page = 1,
+  limit = 10,
+  searchQuery = ""
+) =>
+  request(`/api/products?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery)}`);
 
-export async function deleteProduct(id: string) {
-  await fetch(`${API_URL}/${id}`, { method: "DELETE" });
-}
+export const fetchProduct = (id: string) =>
+  request(`/api/products/${id}`);
+
+export const createProduct = (product: any) =>
+  request("/api/products", { method: "POST", body: product });
+
+export const updateProduct = (id: string, product: any) =>
+  request(`/api/products/${id}`, { method: "PUT", body: product });
+
+export const deleteProduct = (id: string) =>
+  request(`/api/products/${id}`, { method: "DELETE" });
