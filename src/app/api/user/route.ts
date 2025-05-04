@@ -1,17 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
-export async function GET(req: NextRequest) {
-  const token = req.cookies.get("token")?.value;
+export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  
+console.log("Token from cookies: ", token);
 
   if (!token) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
 
   try {
-    const user = verifyToken(token); // extract user data from the JWT
-    return NextResponse.json({ user });
-  } catch (err) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    return NextResponse.json({ user: decoded });
+  } catch (error) {
+    console.error("Invalid token", error);
     return NextResponse.json({ user: null }, { status: 401 });
   }
 }

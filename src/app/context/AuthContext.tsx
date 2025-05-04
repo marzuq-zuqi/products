@@ -2,24 +2,27 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 interface User {
-  id: string;
+  role: string;
   email: string;
-  // Add more fields as needed
+  sub: string;
+  iat: number;
+  exp: number;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (token: string) => void;
-  logout: () => void;
+  fetchUser: () => Promise<void>;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: () => {},
-  logout: () => {},
+  fetchUser: async () => {},
+  logout: async () => {},
   loading: true,
 });
 
@@ -30,31 +33,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/user", { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Error fetching user", error);
-      } finally {
-        setLoading(false);
+  const fetchUser = async () => {
+    try {
+      const token = Cookies.get("token"); 
+
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/user`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: 'include' 
+      });
+
+      console.log(res)
+
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+      } else {
+        setUser(null);
       }
-    };
-
-    fetchUser();
-  }, []);
-
-  const login = (token: string) => {
-    // You can also store the token here if needed
-    // but in most setups, it's stored in an HTTP-only cookie
-    router.push("/");
+    } catch (error) {
+      console.error("Error fetching user", error);
+      setUser(null);
+    }
   };
+
+  useEffect(() => {
+    const loadUser = async () => {
+      setLoading(true);
+      await fetchUser();
+      setLoading(false);
+    };
+    loadUser();
+  }, []);
 
   const logout = async () => {
     await fetch("/api/logout", {
@@ -66,8 +84,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {children}
+    <AuthContext.Provider value={{ user, fetchUser, logout, loading }}>
+      {loading ? <div className="p-4 text-center">Loading...</div> : children}
     </AuthContext.Provider>
   );
 };

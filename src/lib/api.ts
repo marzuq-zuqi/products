@@ -29,14 +29,13 @@ async function request<T = any>(
     return {
       ok: res.ok,
       status: res.status,
-      data,
+      data
     };
   } catch (error) {
     console.error("API request failed:", error);
     return {
       ok: false,
       status: 500,
-      // data: { message: "Network error" },
       data: undefined,
     };
   }

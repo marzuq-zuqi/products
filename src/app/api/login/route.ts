@@ -1,24 +1,39 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-
-interface User {
-  email: string;
-  password: string;
-}
-
-const users: User[] = []
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
-    const user: User | undefined = users.find((user) => user.email === email);
+    const { username, password } = await req.json();
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      return NextResponse.json({ error: errorData.message || "Invalid credentials" }, { status: 401 });
     }
 
-    (await cookies()).set("auth_token", "dummy-token", { httpOnly: true });
+    const data = await res.json();
+    console.log("route data", data)
+    const token = data.token;
+
+    if (!token) {
+      return NextResponse.json({ error: "Token missing from backend response" }, { status: 500 });
+    }
+
+    // Set the token as HttpOnly cookie
+    const cookieStore = await cookies();
+    cookieStore.set("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
 
     return NextResponse.json({ message: "Login successful" });
   } catch (error) {
@@ -26,4 +41,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
-

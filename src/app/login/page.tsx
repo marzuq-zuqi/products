@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/lib/api"; // Adjust this import path as needed
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/app/context/AuthContext";
+import { login } from "@/lib/api";
+
+interface LoginResponse {
+  token?: string; 
+  error?: string; 
+}
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");
@@ -11,6 +17,14 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  
+  const { user, fetchUser } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,16 +34,25 @@ export default function LoginPage() {
     try {
       const res = await login(username, password);
 
+      const data = res.data as LoginResponse;
+      
+      const isProd = process.env.NODE_ENV === 'production';
+
       if (res.ok) {
-        toast.success("Login successful!");
-        router.push("/dashboard");
+        toast.success('Login successful! Redirecting...');
+
+        document.cookie = `auth_token=${data.token}; path=/; SameSite=Lax;${isProd ? ' Secure;' : ''}`;
+
+        await fetchUser(); 
+        router.push("/");
       } else {
-        console.log(res)
-        setError(res.data?.error || "Invalid username or password");
+        setError(data.error || "Invalid username or password");
+        toast.error(data.error || "Invalid username or password");
       }
-    } catch (err) {
-      console.error("Login failed:", err);
+    } catch (err: any) {
+      console.error("Login error:", err);
       setError("Something went wrong. Please try again.");
+      toast.error('Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
