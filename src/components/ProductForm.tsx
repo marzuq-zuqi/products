@@ -22,8 +22,8 @@ export default function ProductForm({ productId }: { productId?: string }) {
         try {
           setLoading(true);
           const data = await fetchProduct(String(productId));
-          if (data) setProduct(data);
-          setProduct(data);
+          if (data) setProduct(data.data);
+          setProduct(data.data);
         } catch (err) { 
           console.error("Product fetch error:", err);
           setError("Failed to load product details.");
@@ -65,53 +65,63 @@ export default function ProductForm({ productId }: { productId?: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow">
-      <h2 className="text-lg font-semibold mb-4">{productId ? "Edit Product" : "Add Product"}</h2>
+  <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg max-w-xl mx-auto">
+    <h2 className="text-2xl font-semibold mb-6 text-center">{productId ? "Edit Product" : "Add Product"}</h2>
 
-      {error && <p className="text-red-500">{error}</p>}
+    {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-      <label className="block">Name:</label>
+    <div className="mb-4">
+      <label className="block text-gray-700 mb-2">Name:</label>
       <input
         name="name"
         value={product.name}
         onChange={handleChange}
-        className="border p-2 w-full mb-2"
+        className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+        required
       />
+    </div>
 
-      <label className="block">Price:</label>
+    <div className="mb-4">
+      <label className="block text-gray-700 mb-2">Price:</label>
       <input
         type="number"
         name="price"
         value={product.price}
         onChange={handleChange}
-        className="border p-2 w-full mb-2"
+        className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+        required
       />
+    </div>
 
-      <label className="block">Quantity:</label>
+    <div className="mb-4">
+      <label className="block text-gray-700 mb-2">Quantity:</label>
       <input
         type="number"
         name="quantity"
         value={product.quantity}
         onChange={handleChange}
-        className="border p-2 w-full mb-2"
+        className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
+        required
       />
-      
-      <label className="block">Description:</label>
+    </div>
+
+    <div className="mb-6">
+      <label className="block text-gray-700 mb-2">Description:</label>
       <input
         name="description"
         value={product.description}
         onChange={handleChange}
-        className="border p-2 w-full mb-2"
+        className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-blue-500"
       />
+    </div>
 
-
-      <button
-        type="submit"
-        className={`bg-green-500 text-white px-4 py-2 rounded ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-        disabled={loading}
-      >
-        {loading ? "Processing..." : productId ? "Update Product" : "Add Product"}
-      </button>
-    </form>
+    <button
+      type="submit"
+      className={`bg-blue-600 text-white px-6 py-3 w-full rounded-lg hover:bg-blue-700 transition duration-300 ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+      disabled={loading}
+    >
+      {loading ? "Processing..." : productId ? "Update Product" : "Add Product"}
+    </button>
+  </form>
   );
 }

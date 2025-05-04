@@ -3,13 +3,21 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 type FetchOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: any;
-  auth?: boolean; // whether to include credentials
+  auth?: boolean;
 };
 
 type APIResponse<T = any> = {
   ok: boolean;
   status: number;
   data?: T;
+};
+
+type Product = {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  description: string;
 };
 
 async function request<T = any>(
@@ -29,7 +37,7 @@ async function request<T = any>(
     return {
       ok: res.ok,
       status: res.status,
-      data
+      data,
     };
   } catch (error) {
     console.error("API request failed:", error);
@@ -55,7 +63,7 @@ export const fetchProducts = (
   page = 1,
   limit = 10,
   searchQuery = ""
-) =>
+): Promise<APIResponse<{ products: Product[]; totalPages: number }>> =>
   request(`/api/products?page=${page}&limit=${limit}&search=${encodeURIComponent(searchQuery)}`);
 
 export const fetchProduct = (id: string) =>

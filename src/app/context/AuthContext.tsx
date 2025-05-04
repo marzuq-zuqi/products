@@ -35,27 +35,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUser = async () => {
     try {
-      const token = Cookies.get("token"); 
-
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/user`, {
         method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        credentials: 'include' 
+        credentials: "include",
       });
-
-      console.log(res)
-
+  
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        setUser(data.username);
       } else {
         setUser(null);
       }
