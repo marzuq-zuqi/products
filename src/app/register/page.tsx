@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { register } from "@/lib/api";
+import { toast } from "react-hot-toast";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -34,10 +35,12 @@ export default function RegisterForm() {
       setLoading(true);
       const res = await register(email, password, username, role);
 
-      if (res.ok) {
+      if (res.ok) { 
+        toast.success('Registration successful! Redirecting...');
         router.push("/login");
       } else {
         setError(res.data.message || "Registration failed");
+        toast.success(res.data.message || "Registration failed");
       }
     } catch (err) {
       console.error("Registration error:", err);
